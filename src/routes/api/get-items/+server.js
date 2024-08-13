@@ -1,4 +1,3 @@
-// src/routes/api/get-items/+server.js
 import pool from '$lib/aws/postgres-client'
 
 export async function GET() {

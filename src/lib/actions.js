@@ -7,6 +7,21 @@ export const sites = {
   create: async (data, preview = null) => {
     await supabase.from('sites').insert(data.site)
 
+    try {
+      const response = await fetch('/api/aws/site/insert-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data.site),
+      })
+
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
+
     // create symbols and root pages
     const { pages, symbols, sections } = data
     const home_page = pages.find((page) => page.url === 'index')
