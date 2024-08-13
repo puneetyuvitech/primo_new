@@ -6,7 +6,7 @@ import { invalidate } from '$app/navigation'
 export const sites = {
   create: async (data, preview = null) => {
     await supabase.from('sites').insert(data.site)
-
+    console.log('----  data', data)
     try {
       const response = await fetch('/api/aws/site/insert-site', {
         method: 'POST',
@@ -31,12 +31,58 @@ export const sites = {
     const child_pages = pages.filter((page) => page.parent !== null)
 
     // create home page first (to ensure it appears first)
+    console.log('  --  before  =-')
     await supabase.from('pages').insert(home_page)
+    console.log('  --  after  =-')
+    try {
+      console.log('  --=-')
+      const pageResponse = await fetch('/api/aws/site/insert-homepages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data.pages),
+      })
+
+      const pageResult = await pageResponse.json()
+      console.log(pageResult)
+    } catch (error) {
+      console.error('Error:', error)
+    }
 
     await Promise.all([
       supabase.from('symbols').insert(symbols),
       supabase.from('pages').insert(root_pages),
     ])
+    try {
+      console.log('  --=-')
+      const symbolResponse = await fetch('/api/aws/site/insert-symbols', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(symbols),
+      })
+      const symbolResult = await symbolResponse.json()
+      console.log(symbolResult)
+    } catch (error) {
+      console.error('Error symbol:', error)
+    }
+    try {
+      console.log('  --=-')
+      const rootPagesResponse = await fetch('/api/aws/site/insert-rootpages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(root_pages),
+      })
+
+      const rootPageResult = await rootPagesResponse.json()
+      console.log(rootPageResult)
+    } catch (error) {
+      console.error('Error Root Pages:', error)
+    }
 
     // upload preview to supabase storage
     if (preview) {
