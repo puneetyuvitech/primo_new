@@ -7,6 +7,7 @@ export const sites = {
   create: async (data, preview = null) => {
     await supabase.from('sites').insert(data.site)
 
+    // Insert sites data api
     try {
       const response = await fetch('/api/aws/site/insert-site', {
         method: 'POST',

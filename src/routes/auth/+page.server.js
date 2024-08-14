@@ -1,16 +1,26 @@
 import { redirect } from '@sveltejs/kit'
 import supabase_admin from '$lib/supabase/admin'
+import pool from '$lib/aws/postgres-client'
 
 /** @type {import('@sveltejs/kit').Load} */
 export async function load({ url, parent }) {
+  // Acquire a client from the pool
+
   const { session } = await parent()
 
   const signing_up = url.searchParams.has('signup')
   const joining_server = url.pathname.includes('set-password')
 
   if (!session && !signing_up && !joining_server) {
-    const { data: existing_users } = await supabase_admin.from('users').select('*')
+    const { data: existing_users } = await supabase_admin
+      .from('users')
+      .select('*')
+
+    const query = 'SELECT * FROM users'
+    const result = await pool.query(query) // Replace this result variable to the initiated.
+
     const initiated = existing_users?.length > 0
+
     if (!initiated) {
       throw redirect(303, '?signup')
     }
@@ -26,7 +36,13 @@ export const actions = {
     const email = data.get('email')
     const password = data.get('password')
 
-    const { data: res, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: res, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    const query = 'SELECT 1 FROM users WHERE email = $1'
+    const result = await pool.query(query, [email])
 
     if (error) {
       console.error(error)
@@ -70,12 +86,12 @@ export const actions = {
     const password = data.get('password')
 
     const { data: res, error: auth_error } = await supabase_admin.auth.admin.createUser({
-      // @ts-ignore
-      email: email,
-      // @ts-ignore
-      password: password,
-      email_confirm: true,
-    })
+        // @ts-ignore
+        email: email,
+        // @ts-ignore
+        password: password,
+        email_confirm: true,
+      })
 
     if (auth_error) {
       return {
@@ -129,3 +145,51 @@ async function server_provisioned() {
     return { success: false, error: `Unknown error` }
   }
 }
+
+// Please un comment if you want to Use the below function when we go with the Postgresql.
+// async function server_provisioned() {
+//   try {
+//     // Connect to the database
+//     const client = await pool.connect()
+
+//     try {
+//       // Execute the query to select all data from the 'sites' table
+//       const result = await client.query('SELECT * FROM sites')
+
+//       // Retrieve data and status
+//       const data = result.rows
+//       const statusCode = result.rowCount > 0 ? 200 : 204
+
+//       if (statusCode === 204) {
+//         return {
+//           success: false,
+//           error: 'No sites found in the database.',
+//         }
+//       } else if (statusCode === 200) {
+//         // Data exists or no data
+//         return { success: true, error: null }
+//       } else {
+//         return { success: false, error: 'Unknown error' }
+//       }
+//     } catch (err) {
+//       // Handle query execution error
+//       console.error('Error executing query:', err)
+//       return {
+//         success: false,
+//         error:
+//           'Query execution failed. Ensure your database schema is correctly set up.',
+//       }
+//     } finally {
+//       // Release the client back to the pool
+//       client.release()
+//     }
+//   } catch (err) {
+//     // Handle connection error
+//     console.error('Error connecting to the database:', err)
+//     return {
+//       success: false,
+//       error:
+//         'Could not connect to the database. Check your connection configuration.',
+//     }
+//   }
+// }

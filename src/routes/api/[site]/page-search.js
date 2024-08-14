@@ -21,22 +21,22 @@ export default async function page_search(url, site_url) {
     })
   } else {
     const [{ data: pages_data, error }, { count: pages_total }] = await Promise.all([
-      supabase_admin
-        .rpc('page_search', {
-          search_terms: options.search.replaceAll(' ', ' & '),
-          site_url,
-        })
-        .select('id, name, url, created_at')
+        supabase_admin
+          .rpc('page_search', {
+            search_terms: options.search.replaceAll(' ', ' & '),
+            site_url,
+          })
+          .select('id, name, url, created_at')
         .range(parseInt(options.range.split(',')[0]), parseInt(options.range.split(',')[1])),
-      supabase_admin.rpc(
-        'page_search',
-        {
-          search_terms: options.search.replaceAll(' ', ' & '),
-          site_url,
-        },
-        { count: 'exact', head: true }
-      ),
-    ])
+        supabase_admin.rpc(
+          'page_search',
+          {
+            search_terms: options.search.replaceAll(' ', ' & '),
+            site_url,
+          },
+          { count: 'exact', head: true }
+        ),
+      ])
 
     // RPC doesn't exist
     if (error) {
