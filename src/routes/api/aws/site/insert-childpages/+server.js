@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit'
 import pool from '$lib/aws/postgres-client'
 
 export async function POST({ request }) {
-  const rootPages = await request.json()
+  const childPages = await request.json()
 
   // Define the query
   const query = `
@@ -16,7 +16,7 @@ export async function POST({ request }) {
   try {
     client = await pool.connect()
 
-    for (const page of rootPages) {
+    for (const page of childPages) {
       console.log('-- Page Details ', page)
       const values = [
         page.id,
@@ -34,11 +34,11 @@ export async function POST({ request }) {
     }
 
     return json(
-      { message: 'root pages inserted successfully' },
+      { message: 'child pages inserted successfully' },
       { status: 200 }
     )
   } catch (err) {
-    console.error('Error inserting root pages:', err)
+    console.error('Error inserting child pages:', err)
   } finally {
     if (client) {
       client.release()

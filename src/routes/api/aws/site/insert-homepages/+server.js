@@ -15,11 +15,8 @@ export async function POST({ request }) {
   let client
 
   try {
-    // Acquire a client from the pool
     client = await pool.connect()
-    console.log('----------', client)
 
-    // Execute the query
     for (const page of pages) {
       const values = [
         page.id,
@@ -32,7 +29,6 @@ export async function POST({ request }) {
         JSON.stringify(page.content) || '{}',
       ]
 
-      // Execute the query
       await client.query(query, values)
     }
 
@@ -41,14 +37,12 @@ export async function POST({ request }) {
       { status: 200 }
     )
   } catch (err) {
-    // Log the detailed error message
     console.error('Error inserting home pages:', err, err)
     return json(
       { error: 'Error inserting home pages', details: err },
       { status: 500 }
     )
   } finally {
-    // Release the client back to the pool
     if (client) {
       client.release()
     }

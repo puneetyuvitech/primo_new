@@ -28,6 +28,7 @@
       if (response.ok) {
         item = await response.json()
       } else {
+        console.log(' failed to fetch get-items', error)
         error = 'Failed to fetch data'
       }
     } catch (err) {

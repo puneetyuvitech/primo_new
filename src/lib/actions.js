@@ -93,12 +93,64 @@ export const sites = {
 
     // create child pages (dependant on parent page IDs)
     await supabase.from('pages').insert(child_pages)
+    try {
+      console.log('  --=-')
+      const childPagesResponse = await fetch(
+        '/api/aws/site/insert-childpages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(child_pages),
+        }
+      )
+
+      const childPageResult = await childPagesResponse.json()
+      console.log(childPageResult)
+    } catch (error) {
+      console.error('Error child Pages:', error)
+      return error
+    }
 
     // create sections (dependant on page IDs)
     await supabase.from('sections').insert(sections)
+    try {
+      console.log('  --=-')
+      const sectionResponse = await fetch('/api/aws/site/insert-sections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sections),
+      })
+
+      const sectionResult = await sectionResponse.json()
+      console.log(sectionResult)
+    } catch (error) {
+      console.error('Error child Pages:', error)
+      return error
+    }
   },
   update: async (id, props) => {
     await supabase.from('sites').update(props).eq('id', id)
+    try {
+      const response = await fetch('/api/aws/site/update-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id,
+          ...props,
+        }),
+      })
+
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   },
   delete: async (site, { delete_repo, delete_files }) => {
     const [{ data: pages }, { data: sections }, { data: symbols }] =
@@ -167,5 +219,23 @@ export const sites = {
     }
     await supabase.from('sites').delete().eq('id', site.id)
     invalidate('app:data')
+    try {
+      const response = await fetch('/api/aws/site/delete-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          site,
+          delete_repo,
+          delete_files,
+        }),
+      })
+
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   },
 }
