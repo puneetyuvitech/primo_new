@@ -19,17 +19,16 @@ export async function GET({ locals, url }) {
     .single()
 
   // postgresql
-  let pos_token
-  try {
-    const res = await pool.query('SELECT value FROM config WHERE id = $1', [
-      `${provider}_token`,
-    ])
-    pos_token = res.rows[0]
-  } catch (err) {
-    console.error('Error querying PostgreSQL', err)
-  } finally {
-    pool.release()
-  }
+  // try {
+  //   const res = await pool.query('SELECT value FROM config WHERE id = $1', [
+  //     `${provider}_token`,
+  //   ])
+  //   const token = res.rows[0].value
+  // } catch (err) {
+  //   console.error('Error querying PostgreSQL', err)
+  // } finally {
+  //   pool.release()
+  // }
 
   let repos = null
   if (provider === 'github' && token) {

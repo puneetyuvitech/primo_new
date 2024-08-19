@@ -1,5 +1,6 @@
 import { json, error as server_error } from '@sveltejs/kit'
 import supabase_admin from '$lib/supabase/admin'
+import pool from '$lib/aws/postgres-client'
 import axios from 'axios'
 
 export async function POST({ request, locals }) {
@@ -16,6 +17,15 @@ export async function POST({ request, locals }) {
     .select('value')
     .eq('id', `${provider}_token`)
     .single()
+
+  // Postgresql
+  // const result = await pool.query('SELECT value FROM config WHERE id = $1', [
+  //     `${provider}_token`,
+  //   ])
+  // if (result.rows.length === 0 {
+  //   return json({ error: 'Token not found' }, { status: 404 })
+  // }
+  // const token = result.rows[0].value;
 
   const res = await Promise.all(
     files.map(async (file) => {

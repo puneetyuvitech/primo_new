@@ -12,14 +12,14 @@ export async function GET({ locals, url }) {
   }
 
   const provider = url.searchParams.get('provider')
-  const query = 'SELECT value FROM config WHERE id = $1'
-  const values = [`${provider}_token`]
-  const res = await pool.query(query, values)
 
-  const pos_token = res.rows[0]?.value
-  if (!pos_token) {
-    return json(null)
-  }
+  // const query = 'SELECT value FROM config WHERE id = $1'
+  // const values = [`${provider}_token`]
+  // const res = await pool.query(query, values)
+  // const token = res.rows[0]?.value
+  // if (!token) {
+  //   return json({ error: 'Token not found' }, { status: 404 })
+  // }
 
   const { data: token, error } = await supabase_admin
     .from('config')

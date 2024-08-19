@@ -50,7 +50,7 @@ export default async function page_search(url, site_url) {
         error: `The page_search RPC hasn't been added`,
       })
     }
-    // postgreysql
+    // postgresql
     const searchTerms = options.search.replaceAll(' ', ' & ')
     const [rangeStart, rangeEnd] = options.range.split(',').map(Number)
 

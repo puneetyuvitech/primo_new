@@ -4,7 +4,6 @@ import pool from '$lib/aws/postgres-client'
 export async function POST({ request }) {
   const rootPages = await request.json()
 
-  // Define the query
   const query = `
       INSERT INTO public.pages (id, name, url, site, parent, code, fields, content)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -29,7 +28,6 @@ export async function POST({ request }) {
         JSON.stringify(page.content),
       ]
 
-      // Execute the query
       await client.query(query, values)
     }
 

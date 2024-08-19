@@ -14,7 +14,6 @@ export async function POST({ request }) {
   let client
 
   try {
-    // Acquire a client from the pool
     client = await pool.connect()
     console.log('----------', client)
 
@@ -33,14 +32,12 @@ export async function POST({ request }) {
     }
     return json({ message: 'Symbols inserted successfully' }, { status: 200 })
   } catch (err) {
-    // Log the detailed error message
     console.error('Symbols inserting data:', err, err)
     return json(
       { error: 'Symbols inserting data', details: err },
       { status: 500 }
     )
   } finally {
-    // Release the client back to the pool
     if (client) {
       client.release()
     }

@@ -1,19 +1,16 @@
 import pool from '$lib/aws/postgres-client'
 
-export async function GET() {
+export async function POST() {
   const query = `
     SELECT * FROM sites 
     WHERE id = $1
   `
-  const values = ['5255aa4e-b274-4080-8a9e-b9cfb21a5e12'] // Example key value
-
+  const values = ['f1ef8e50-d777-43b3-b8ef-4df1f16ead9a']
+  console.log('------', values)
   let client
 
   try {
-    // Acquire a client from the pool
     client = await pool.connect()
-
-    // Execute the query
     const result = await client.query(query, values)
 
     // Return the first row of the result

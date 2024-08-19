@@ -4,7 +4,6 @@ import pool from '$lib/aws/postgres-client'
 export async function POST({ request }) {
   const sections = await request.json()
 
-  // Define the query
   const query = `
       INSERT INTO public.sections (id, page, symbol, index, content)
       VALUES ($1, $2, $3, $4, $5)
@@ -26,7 +25,7 @@ export async function POST({ request }) {
         JSON.stringify(section.content),
       ]
       console.log('-- Values for insertion:', values)
-      // Execute the query
+
       await client.query(query, values)
     }
 

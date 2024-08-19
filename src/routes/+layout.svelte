@@ -24,11 +24,16 @@
   let error = null
   onMount(async () => {
     try {
-      const response = await fetch('/api/aws/get-items')
+      const response = await fetch('/api/get-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: null,
+      })
       if (response.ok) {
         item = await response.json()
       } else {
-        console.log(' failed to fetch get-items', error)
         error = 'Failed to fetch data'
       }
     } catch (err) {
