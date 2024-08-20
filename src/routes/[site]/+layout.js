@@ -57,19 +57,24 @@ export async function load({ depends, params, parent }) {
   }
 
   // Get sorted pages, symbols, and sections
-  const [{ data: pages }, { data: symbols }, { data: sections }] = await Promise.all([
-    supabase
-      .from('pages')
-      .select()
-      .match({ site: site.id })
-      .order('created_at', { ascending: true }),
-    supabase.from('symbols').select().match({ site: site.id }).order('index', { ascending: true }),
-    supabase
-      .from('sections')
-      .select('id, page, index, content, symbol')
-      .match({ page: page['id'] })
-      .order('index', { ascending: true }),
-  ])
+  const [{ data: pages }, { data: symbols }, { data: sections }] =
+    await Promise.all([
+      supabase
+        .from('pages')
+        .select()
+        .match({ site: site.id })
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('symbols')
+        .select()
+        .match({ site: site.id })
+        .order('index', { ascending: true }),
+      supabase
+        .from('sections')
+        .select('id, page, index, content, symbol')
+        .match({ page: page['id'] })
+        .order('index', { ascending: true }),
+    ])
 
   return {
     site,
@@ -79,3 +84,52 @@ export async function load({ depends, params, parent }) {
     symbols,
   }
 }
+
+// Postgresql
+// export async function load({ depends, params, parent }) {
+//   depends('app:data')
+
+//   const { session } = await parent()
+
+//   if (!session) {
+//     // the user is not signed in
+//     throw redirect(303, '/auth')
+//   }
+
+//   // Get site and page
+//   const site_url = params['site']
+//   const client_params = params['page']?.split('/') || []
+//   const page_url = client_params.pop() || 'index'
+//   const parent_url = client_params.pop() || null
+//   console.log('   IN  ------', site_url, page_url)
+//   const response = await fetch('/api/aws/site/site-layoutData', {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       site_url,
+//       page_url,
+//     }),
+//   })
+//   console.log('------ Response', response)
+//   if (!response.ok) {
+//     console.log('-----', response)
+//     throw redirect(303, '/')
+//   }
+
+//   const { site, page, pages, symbols, sections } = await response.json()
+
+//   // Redirect if page is not found and the URL isn't 'index'
+//   if (!page && page_url !== 'index') {
+//     throw redirect(303, `/${site_url}/index`)
+//   }
+
+//   return {
+//     site,
+//     page,
+//     pages,
+//     sections,
+//     symbols,
+//   }
+// }

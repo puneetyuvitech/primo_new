@@ -6,8 +6,7 @@ import { invalidate } from '$app/navigation'
 export const sites = {
   create: async (data, preview = null) => {
     await supabase.from('sites').insert(data.site)
-
-    // Insert sites data api
+    console.log('----  data', data)
     try {
       const response = await fetch('/api/aws/site/insert-site', {
         method: 'POST',
@@ -32,28 +31,144 @@ export const sites = {
     const child_pages = pages.filter((page) => page.parent !== null)
 
     // create home page first (to ensure it appears first)
+    console.log('  --  before  =-')
     await supabase.from('pages').insert(home_page)
+    console.log('  --  after  =-')
+    try {
+      console.log('  --=-')
+      const pageResponse = await fetch('/api/aws/site/insert-homepages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data.pages),
+      })
+
+      const pageResult = await pageResponse.json()
+      console.log(pageResult)
+    } catch (error) {
+      console.error('Error:', error)
+    }
 
     await Promise.all([
       supabase.from('symbols').insert(symbols),
       supabase.from('pages').insert(root_pages),
     ])
+    try {
+      console.log('  --=-')
+      const symbolResponse = await fetch('/api/aws/site/insert-symbols', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(symbols),
+      })
+      const symbolResult = await symbolResponse.json()
+      console.log(symbolResult)
+    } catch (error) {
+      console.error('Error symbol:', error)
+    }
+    try {
+      console.log('  --=-')
+      const rootPagesResponse = await fetch('/api/aws/site/insert-rootpages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(root_pages),
+      })
+
+      const rootPageResult = await rootPagesResponse.json()
+      console.log(rootPageResult)
+    } catch (error) {
+      console.error('Error Root Pages:', error)
+    }
 
     // upload preview to supabase storage
     if (preview) {
       await supabase.storage
         .from('sites')
         .upload(`${data.site.id}/preview.html`, preview)
+      // Upload to S3
+      try {
+        const uploadPreviewResponse = await fetch(
+          '/api/aws/s3/upload-preview',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              path: `sites/${data.site.id}/preview.html`,
+              content: preview,
+            }),
+          }
+        )
+      } catch (error) {
+        console.error('--- Error ', error)
+      }
     }
 
     // create child pages (dependant on parent page IDs)
     await supabase.from('pages').insert(child_pages)
+    try {
+      console.log('  --=-')
+      const childPagesResponse = await fetch(
+        '/api/aws/site/insert-childpages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(child_pages),
+        }
+      )
+
+      const childPageResult = await childPagesResponse.json()
+      console.log(childPageResult)
+    } catch (error) {
+      console.error('Error child Pages:', error)
+      return error
+    }
 
     // create sections (dependant on page IDs)
     await supabase.from('sections').insert(sections)
+    try {
+      console.log('  --=-')
+      const sectionResponse = await fetch('/api/aws/site/insert-sections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sections),
+      })
+
+      const sectionResult = await sectionResponse.json()
+      console.log(sectionResult)
+    } catch (error) {
+      console.error('Error child Pages:', error)
+      return error
+    }
   },
   update: async (id, props) => {
     await supabase.from('sites').update(props).eq('id', id)
+    try {
+      const response = await fetch('/api/aws/site/update-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id,
+          ...props,
+        }),
+      })
+
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   },
   delete: async (site, { delete_repo, delete_files }) => {
     const [{ data: pages }, { data: sections }, { data: symbols }] =
@@ -87,6 +202,21 @@ export const sites = {
     await supabase.storage
       .from('sites')
       .upload(`backups/${site.url}-${site.id}.json`, backup_json)
+    // S3
+    try {
+      const uploadBackupResponse = await fetch('/api/aws/s3/upload-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path: `backups/${site.url}-${site.id}.json`,
+          content: backup_json,
+        }),
+      })
+    } catch (error) {
+      console.error('--- Error ', error)
+    }
 
     if (sections) {
       await Promise.all(
@@ -105,12 +235,77 @@ export const sites = {
 
     if (delete_files) {
       let siteFiles = await getFiles('sites', site.id)
-      if (siteFiles.length)
+      if (siteFiles.length) {
         await supabase.storage.from('sites').remove(siteFiles)
-
+      }
       let imageFiles = await getFiles('images', site.id)
-      if (imageFiles.length)
+      if (imageFiles.length) {
         await supabase.storage.from('images').remove(imageFiles)
+      }
+      // S3 get site files and Delete
+      let getSiteFilesResponse = await fetch('/api/aws/s3/get-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bucket: 'alhussein-supabase',
+          paths: `sites/${site.id}`,
+        }),
+      })
+      const getSiteFiles = await getSiteFilesResponse.json()
+      console.log('---- getSiteFiles', getSiteFiles, getSiteFiles.files.length)
+      // if (getSiteFiles.files.length) {
+      //   console.log('-- Yes getSiteFiles length available')
+      //   try {
+      //     console.log('  API for delete Site File hitted')
+      //     const deleteSiteFiles = await fetch('/api/aws/s3/delete-files', {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({ paths: getSiteFiles.files }),
+      //     })
+      //     console.log(
+      //       'Site files deleted from S3 successfully',
+      //       deleteSiteFiles
+      //     )
+      //   } catch (error) {
+      //     console.error('Error deleting Site files from S3:', error)
+      //   }
+      // }
+
+      /***** */
+      // S3 get image files and Delete
+      let getImageFilesResponse = await fetch('/api/aws/s3/get-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bucket: 'alhussein-supabase',
+          paths: `sites/${site.id}`,
+        }),
+      })
+      const getImageFiles = await getImageFilesResponse.json()
+      console.log(' ------- getImageFiles', getImageFiles, getImageFiles.length)
+      // if (getImageFiles.files.length) {
+      //   try {
+      //     const deleteImageFiles = await fetch('/api/aws/s3/delete-files', {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({ paths: getImageFiles.files }),
+      //     })
+      //     console.log(
+      //       'Image files deleted from S3 successfully',
+      //       deleteImageFiles
+      //     )
+      //   } catch (error) {
+      //     console.error('Error deleting Image files from S3:', error)
+      //   }
+      // }
     }
     if (delete_repo) {
       const repo_deleted = await axios.post('/api/deploy/delete', { site })
@@ -122,5 +317,23 @@ export const sites = {
     }
     await supabase.from('sites').delete().eq('id', site.id)
     invalidate('app:data')
+    try {
+      const response = await fetch('/api/aws/site/delete-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          site,
+          delete_repo,
+          delete_files,
+        }),
+      })
+
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   },
 }

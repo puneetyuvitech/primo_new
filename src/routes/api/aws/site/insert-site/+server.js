@@ -23,22 +23,17 @@ export async function POST({ request }) {
   let client
 
   try {
-    // Acquire a client from the pool
     client = await pool.connect()
-    console.log('----------', client)
 
-    // Execute the query
     await client.query(query, values)
     return json({ message: 'Data inserted successfully' }, { status: 200 })
   } catch (err) {
-    // Log the detailed error message
     console.error('Error inserting data:', err, err)
     return json(
       { error: 'Error inserting data', details: err },
       { status: 500 }
     )
   } finally {
-    // Release the client back to the pool
     if (client) {
       client.release()
     }

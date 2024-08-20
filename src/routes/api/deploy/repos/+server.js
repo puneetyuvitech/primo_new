@@ -1,6 +1,7 @@
 import { json, error as server_error } from '@sveltejs/kit'
 import supabase_admin from '$lib/supabase/admin'
 import axios from 'axios'
+import pool from '$lib/aws/postgres-client'
 
 export async function GET({ locals, url }) {
   const session = await locals.getSession()
@@ -16,6 +17,18 @@ export async function GET({ locals, url }) {
     .select('value')
     .eq('id', `${provider}_token`)
     .single()
+
+  // postgresql
+  // try {
+  //   const res = await pool.query('SELECT value FROM config WHERE id = $1', [
+  //     `${provider}_token`,
+  //   ])
+  //   const token = res.rows[0].value
+  // } catch (err) {
+  //   console.error('Error querying PostgreSQL', err)
+  // } finally {
+  //   pool.release()
+  // }
 
   let repos = null
   if (provider === 'github' && token) {

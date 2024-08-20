@@ -1,15 +1,25 @@
 import { json, error as server_error } from '@sveltejs/kit'
 import supabase_admin from '$lib/supabase/admin'
 import axios from 'axios'
+import pool from '$lib/aws/postgres-client'
 
 export async function GET({ locals, url }) {
   const session = await locals.getSession()
+  console.log('------- Session', session)
   if (!session) {
     // the user is not signed in
     throw server_error(401, { message: 'Unauthorized' })
   }
 
   const provider = url.searchParams.get('provider')
+
+  // const query = 'SELECT value FROM config WHERE id = $1'
+  // const values = [`${provider}_token`]
+  // const res = await pool.query(query, values)
+  // const token = res.rows[0]?.value
+  // if (!token) {
+  //   return json({ error: 'Token not found' }, { status: 404 })
+  // }
 
   const { data: token, error } = await supabase_admin
     .from('config')
