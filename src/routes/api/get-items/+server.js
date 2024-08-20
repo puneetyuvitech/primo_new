@@ -6,7 +6,6 @@ export async function POST() {
     WHERE id = $1
   `
   const values = ['f1ef8e50-d777-43b3-b8ef-4df1f16ead9a']
-  console.log('------', values)
   let client
 
   try {
