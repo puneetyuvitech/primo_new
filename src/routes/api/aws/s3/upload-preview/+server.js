@@ -2,7 +2,7 @@ import s3client from '$lib/aws/s3-client'
 import { json } from '@sveltejs/kit'
 
 export async function POST({ request }) {
-  const { content, path } = request.json()
+  const { path, content } = await request.json()
   const params = {
     Bucket: 'alhussein-supabase',
     Key: path,

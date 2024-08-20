@@ -16,7 +16,6 @@ export async function POST({ request }) {
     client = await pool.connect()
 
     for (const section of sections) {
-      console.log('-- section Details ', section)
       const values = [
         section.id,
         section.page,
@@ -24,7 +23,6 @@ export async function POST({ request }) {
         section.index,
         JSON.stringify(section.content),
       ]
-      console.log('-- Values for insertion:', values)
 
       await client.query(query, values)
     }

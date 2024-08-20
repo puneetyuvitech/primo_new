@@ -17,7 +17,6 @@ export async function POST({ request }) {
     client = await pool.connect()
 
     for (const page of childPages) {
-      console.log('-- Page Details ', page)
       const values = [
         page.id,
         page.name,

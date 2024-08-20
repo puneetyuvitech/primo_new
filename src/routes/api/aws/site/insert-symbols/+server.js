@@ -15,7 +15,6 @@ export async function POST({ request }) {
 
   try {
     client = await pool.connect()
-    console.log('----------', client)
 
     for (const symbol of symbols) {
       const values = [
