@@ -1,5 +1,6 @@
 import { SupabaseClient, Session } from '@supabase/supabase-js'
 import { Database } from './DatabaseDefinitions'
+import keycloak from '$lib/aws/auth'
 
 declare global {
 	namespace App {
@@ -14,3 +15,21 @@ declare global {
 		// interface Platform {}
 	}
 }
+
+// declare global {
+// 	namespace App {
+// 	  interface Locals {
+// 		keycloak: KeycloakInstance;
+// 		getSession(): Promise<{
+// 		  token: string;
+// 		  userInfo: any; 
+// 		} | null>;
+// 	  }
+// 	  interface PageData {
+// 		session: {
+// 		  token: string;
+// 		  userInfo: any; 
+// 		} | null;
+// 	  }
+// 	}
+//   }
