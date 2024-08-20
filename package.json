@@ -22,6 +22,7 @@
     "aws-sdk": "^2.1673.0",
     "axios": "^0.26.0",
     "estree-walker": "^3.0.3",
+    "keycloak-js": "^25.0.4",
     "lodash-es": "^4.17.21",
     "memfs": "^4.7.7",
     "nanoid": "^3.1.23",
