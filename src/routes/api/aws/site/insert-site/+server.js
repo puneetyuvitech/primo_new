@@ -24,7 +24,6 @@ export async function POST({ request }) {
 
   try {
     client = await pool.connect()
-    console.log('----------', client)
 
     await client.query(query, values)
     return json({ message: 'Data inserted successfully' }, { status: 200 })

@@ -89,6 +89,24 @@ export const sites = {
       await supabase.storage
         .from('sites')
         .upload(`${data.site.id}/preview.html`, preview)
+      // Upload to S3
+      try {
+        const uploadPreviewResponse = await fetch(
+          '/api/aws/s3/upload-preview',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: preview,
+              path: `${data.site.id}/preview.html`,
+            }),
+          }
+        )
+      } catch (error) {
+        console.error('--- Error ', error)
+      }
     }
 
     // create child pages (dependant on parent page IDs)
@@ -184,6 +202,21 @@ export const sites = {
     await supabase.storage
       .from('sites')
       .upload(`backups/${site.url}-${site.id}.json`, backup_json)
+    // S3
+    try {
+      const uploadBackupResponse = await fetch('/api/aws/s3/upload-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: backup_json,
+          path: `backups/${site.url}-${site.id}.json`,
+        }),
+      })
+    } catch (error) {
+      console.error('--- Error ', error)
+    }
 
     if (sections) {
       await Promise.all(

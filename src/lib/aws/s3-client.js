@@ -12,7 +12,7 @@ AWS.config.update({
   region: AWS_REGION,
 })
 
-const s3 = new AWS.S3()
-console.log('--- S3 client ', s3)
+const s3client = new AWS.S3()
+console.log('--- S3 client ', s3client)
 
-export default s3
+export default s3client
