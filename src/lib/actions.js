@@ -250,30 +250,30 @@ export const sites = {
         },
         body: JSON.stringify({
           bucket: 'alhussein-supabase',
-          paths: `sites/${site.id}`,
+          path: `sites/${site.id}`,
         }),
       })
       const getSiteFiles = await getSiteFilesResponse.json()
       console.log('---- getSiteFiles', getSiteFiles, getSiteFiles.files.length)
-      // if (getSiteFiles.files.length) {
-      //   console.log('-- Yes getSiteFiles length available')
-      //   try {
-      //     console.log('  API for delete Site File hitted')
-      //     const deleteSiteFiles = await fetch('/api/aws/s3/delete-files', {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //       },
-      //       body: JSON.stringify({ paths: getSiteFiles.files }),
-      //     })
-      //     console.log(
-      //       'Site files deleted from S3 successfully',
-      //       deleteSiteFiles
-      //     )
-      //   } catch (error) {
-      //     console.error('Error deleting Site files from S3:', error)
-      //   }
-      // }
+      if (getSiteFiles.files.length) {
+        console.log('-- Yes getSiteFiles length available')
+        try {
+          console.log('  API for delete Site File hitted')
+          const deleteSiteFiles = await fetch('/api/aws/s3/delete-files', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ paths: getSiteFiles.files }),
+          })
+          console.log(
+            'Site files deleted from S3 successfully',
+            deleteSiteFiles
+          )
+        } catch (error) {
+          console.error('Error deleting Site files from S3:', error)
+        }
+      }
 
       /***** */
       // S3 get image files and Delete
@@ -284,28 +284,28 @@ export const sites = {
         },
         body: JSON.stringify({
           bucket: 'alhussein-supabase',
-          paths: `sites/${site.id}`,
+          path: `sites/${site.id}`,
         }),
       })
       const getImageFiles = await getImageFilesResponse.json()
       console.log(' ------- getImageFiles', getImageFiles, getImageFiles.length)
-      // if (getImageFiles.files.length) {
-      //   try {
-      //     const deleteImageFiles = await fetch('/api/aws/s3/delete-files', {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //       },
-      //       body: JSON.stringify({ paths: getImageFiles.files }),
-      //     })
-      //     console.log(
-      //       'Image files deleted from S3 successfully',
-      //       deleteImageFiles
-      //     )
-      //   } catch (error) {
-      //     console.error('Error deleting Image files from S3:', error)
-      //   }
-      // }
+      if (getImageFiles.files.length) {
+        try {
+          const deleteImageFiles = await fetch('/api/aws/s3/delete-files', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ paths: getImageFiles.files }),
+          })
+          console.log(
+            'Image files deleted from S3 successfully',
+            deleteImageFiles
+          )
+        } catch (error) {
+          console.error('Error deleting Image files from S3:', error)
+        }
+      }
     }
     if (delete_repo) {
       const repo_deleted = await axios.post('/api/deploy/delete', { site })

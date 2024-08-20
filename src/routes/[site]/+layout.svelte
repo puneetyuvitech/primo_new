@@ -162,6 +162,17 @@
         return res.publicUrl
       }
     }
+    try {
+      const storage_subscribe = await fetch('/api/aws/s3/storage-subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bucket, key, file, options }),
+      })
+    } catch (error) {
+      console.log('--  Error :', error)
+    }
   })
 </script>
 

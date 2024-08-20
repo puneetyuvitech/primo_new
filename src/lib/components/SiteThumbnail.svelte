@@ -2,6 +2,7 @@
   import { browser } from '$app/environment'
   import { find as _find } from 'lodash-es'
   import { page } from '$app/stores'
+  import { onMount } from 'svelte'
 
   const { supabase } = $page.data
 
@@ -9,22 +10,41 @@
   export let site
   export let preview = null
 
-  if (!preview && site) {
-    supabase.storage
-      .from('sites')
-      .download(`${site.id}/preview.html`)
-      .then(({ data, error }) => {
-        if (error) {
-          console.log('Error downloading file: ', error.message)
-        } else if (browser) {
-          var reader = new FileReader()
-          reader.onload = function () {
-            preview = reader.result
+  onMount(() => {
+    if (!preview && site) {
+      supabase.storage
+        .from('sites')
+        .download(`${site.id}/preview.html`)
+        .then(({ data, error }) => {
+          if (error) {
+            console.log('Error downloading file: ', error.message)
+          } else if (browser) {
+            var reader = new FileReader()
+            reader.onload = function () {
+              preview = reader.result
+            }
+            reader.readAsText(data)
           }
-          reader.readAsText(data)
-        }
+        })
+      // S3
+      fetch('/api/aws/s3/download-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: `sites/${site.id}/preview.html` }),
       })
-  }
+        .then((response) => response.json())
+        .then(({ preview, error }) => {
+          if (error) {
+            console.error('Error downloading file:', error)
+          } else if (browser) {
+            preview = preview
+          }
+        })
+        .catch((err) => console.error('Fetch error:', err))
+    }
+  })
 
   let container
   let scale
