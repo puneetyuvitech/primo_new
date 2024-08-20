@@ -4,8 +4,6 @@ import pool from '$lib/aws/postgres-client'
 
 /** @type {import('@sveltejs/kit').Load} */
 export async function load({ url, parent }) {
-  // Acquire a client from the pool
-
   const { session } = await parent()
 
   const signing_up = url.searchParams.has('signup')
@@ -18,6 +16,7 @@ export async function load({ url, parent }) {
 
     const query = 'SELECT * FROM users'
     const result = await pool.query(query) // Replace this result variable to the initiated.
+    console.log('result1 : ', result)
 
     const initiated = existing_users?.length > 0
 
@@ -41,8 +40,9 @@ export const actions = {
       password,
     })
 
-    const query = 'SELECT 1 FROM users WHERE email = $1'
+    const query = 'SELECT * FROM users WHERE email = $1'
     const result = await pool.query(query, [email])
+    console.log('result2 : ', result)
 
     if (error) {
       console.error(error)
@@ -74,10 +74,14 @@ export const actions = {
       .from('users')
       .select('count')
       .then(({ data }) => data?.[0]['count'])
+
+    const result = await pool.query('SELECT COUNT(*) AS count FROM users')
+    console.log('result3 : ', result)
     if (count > 0) {
       return {
         success: false,
-        error: 'Server already initialized. Sign in as the server owner to invite users.',
+        error:
+          'Server already initialized. Sign in as the server owner to invite users.',
       }
     }
 
@@ -85,7 +89,8 @@ export const actions = {
     const email = data.get('email')
     const password = data.get('password')
 
-    const { data: res, error: auth_error } = await supabase_admin.auth.admin.createUser({
+    const { data: res, error: auth_error } =
+      await supabase_admin.auth.admin.createUser({
         // @ts-ignore
         email: email,
         // @ts-ignore
@@ -100,9 +105,15 @@ export const actions = {
       }
     } else if (res) {
       // @ts-ignore
-      const { error: signin_error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signin_error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
       if (!signin_error) {
+        const query = 'INSERT INTO users (id,email) VALUES($1, $2)'
+        const result = await pool.query(query, [res.user?.id, res.user?.email])
+        console.log('result4 : ', result)
         // disable email confirmation and add user
         await supabase_admin.from('users').insert({
           id: res.user?.id,
@@ -110,6 +121,10 @@ export const actions = {
         })
 
         // add user to server_members as admin
+        const query1 =
+          'INSERT INTO server_members (user,role,admin) VALUES($1, $2, $3)'
+        const result1 = await pool.query(query1, [res.user?.id, 'DEV', true])
+        console.log('result5 : ', result1)
         await supabase_admin.from('server_members').insert({
           user: res.user?.id,
           role: 'DEV',
