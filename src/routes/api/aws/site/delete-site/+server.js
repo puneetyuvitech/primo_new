@@ -78,15 +78,15 @@ export async function POST({ request }) {
   const { site, delete_repo, delete_files } = await request.json()
 
   try {
-    const [pages, sections, symbols] = await Promise.all([
+    const [pagesResult, sectionsResult, symbolsResult] = await Promise.all([
       pool.query(
         'SELECT id, url, name, code, fields, content, site, parent FROM pages WHERE site = $1',
         [site.id]
       ),
       pool.query(
-        `SELECT id, content, page_id AS "pageId", symbol, "index" 
+        `SELECT id, content, page AS "pageId", symbol, "index" 
          FROM sections 
-         WHERE page_id IN (
+         WHERE page IN (
            SELECT id 
            FROM pages 
            WHERE site = $1
@@ -98,14 +98,19 @@ export async function POST({ request }) {
         [site.id]
       ),
     ])
-
+    const pages = pagesResult.rows
+    const sections = sectionsResult.rows
+    const symbols = symbolsResult.rows
     const backup_json = JSON.stringify({
       site,
       pages,
-      sections: sections.map((section) => ({
-        ...section,
-        page: section.page.id,
-      })),
+      sections: sections.map((section) => {
+        console.log('-----section', section)
+        return {
+          ...section,
+          page: section.pageId,
+        }
+      }),
       symbols,
       version: 2,
     })
@@ -136,29 +141,31 @@ export async function POST({ request }) {
     let files = []
     let imageFiles = []
     if (delete_files) {
-      files = await listFilesFromS3('alhussein-supabase', `sites/${site.id}`)
-      if (files.length) {
-        const deleteParams = {
-          Bucket: 'alhussein-supabase',
-          Delete: {
-            Objects: files.map((path) => ({ Key: path })),
-          },
-        }
-        await s3client.deleteObjects(deleteParams).promise()
-      }
-      imageFiles = await listFilesFromS3(
-        'alhussein-supabase',
-        `images/${site.id}`
-      )
-      if (imageFiles.length) {
-        const deleteParams = {
-          Bucket: 'alhussein-supabase',
-          Delete: {
-            Objects: imageFiles.map((path) => ({ Key: path })),
-          },
-        }
-        await s3client.deleteObjects(deleteParams).promise()
-      }
+      // files = await listFilesFromS3('alhussein-supabase', `sites/${site.id}`)
+      // if (files.length) {
+      //   const deleteParams = {
+      //     Bucket: 'alhussein-supabase',
+      //     Delete: {
+      //       Objects: files.map((path) => ({ Key: path })),
+      //     },
+      //   }
+      //   await s3client.deleteObjects(deleteParams).promise()
+      // }
+      // imageFiles = await listFilesFromS3(
+      //   'alhussein-supabase',
+      //   `images/${site.id}`
+      // )
+      // if (imageFiles.length) {
+      //   const deleteParams = {
+      //     Bucket: 'alhussein-supabase',
+      //     Delete: {
+      //       Objects: imageFiles.map((path) => ({ Key: path })),
+      //     },
+      //   }
+      //   await s3client.deleteObjects(deleteParams).promise()
+      // }
+      await deleteFilesFromS3('alhussein-supabase', `sites/${site.id}`)
+      await deleteFilesFromS3('alhussein-supabase', `images/${site.id}`)
     }
     if (delete_repo) {
       const repo_deleted = await axios.post('/api/deploy/delete', { site })
@@ -168,6 +175,12 @@ export async function POST({ request }) {
         )
       }
     }
+    await pool.query('DELETE FROM sites WHERE id = $1', [site.id])
+    console.log('    ---  Site Deleted Successfiully ---   ')
+    return json({
+      success: true,
+      message: 'Successfully Site Deleted',
+    })
   } catch (error) {
     console.error('Error deleting site:', error)
     return new Response(
@@ -180,46 +193,78 @@ export async function POST({ request }) {
   }
 }
 
-async function listFilesFromS3(bucket, path) {
-  let files = []
-  let dirs = []
-  let hasMore = true
-  let nextContinuationToken = null
-  console.log('---- path', path)
-  while (hasMore) {
-    try {
+// async function listFilesFromS3(bucket, path) {
+//   let files = []
+//   let dirs = []
+//   let hasMore = true
+//   let nextContinuationToken = null
+//   console.log('---- path', path)
+//   while (hasMore) {
+//     try {
+//       const params = {
+//         Bucket: bucket,
+//         Prefix: path,
+//         ContinuationToken: nextContinuationToken,
+//       }
+
+//       const data = await s3client.listObjectsV2(params).promise()
+//       if (data.Contents) {
+//         console.log('-- data', data, data.Contents)
+//         files = [
+//           ...files,
+//           ...data.Contents.map((item) => {
+//             const filePath = item.Key
+//             if (filePath && filePath.endsWith('/')) {
+//               dirs.push(filePath)
+//             }
+//             return filePath
+//           }),
+//         ]
+//       }
+
+//       nextContinuationToken = data.NextContinuationToken
+//       hasMore = !!nextContinuationToken
+//     } catch (error) {
+//       console.error('File listing error', error)
+//       throw new Error('Error listing files')
+//     }
+//   }
+
+//   for (const dir of dirs) {
+//     files = await listFilesFromS3(bucket, dir)
+//   }
+//   console.log('----- files', files)
+//   return files
+// }
+
+async function deleteFilesFromS3(bucket, path) {
+  try {
+    let hasMore = true
+    let continuationToken = null
+
+    while (hasMore) {
       const params = {
         Bucket: bucket,
         Prefix: path,
-        ContinuationToken: nextContinuationToken,
+        ContinuationToken: continuationToken,
       }
 
       const data = await s3client.listObjectsV2(params).promise()
-      if (data.Contents) {
-        console.log('-- data', data, data.Contents)
-        files = [
-          ...files,
-          ...data.Contents.map((item) => {
-            const filePath = item.Key
-            if (filePath && filePath.endsWith('/')) {
-              dirs.push(filePath)
-            }
-            return filePath
-          }),
-        ]
+      if (data.Contents && data.Contents.length > 0) {
+        const deleteParams = {
+          Bucket: bucket,
+          Delete: {
+            Objects: data.Contents.map((item) => ({ Key: item.Key })),
+          },
+        }
+        await s3client.deleteObjects(deleteParams).promise()
       }
 
-      nextContinuationToken = data.NextContinuationToken
-      hasMore = !!nextContinuationToken
-    } catch (error) {
-      console.error('File listing error', error)
-      throw new Error('Error listing files')
+      continuationToken = data.NextContinuationToken
+      hasMore = !!continuationToken
     }
+  } catch (error) {
+    console.error('Error deleting files from S3:', error)
+    throw new Error('Failed to delete files from S3')
   }
-
-  for (const dir of dirs) {
-    files = await listFilesFromS3(bucket, dir)
-  }
-  console.log('----- files', files)
-  return files
 }

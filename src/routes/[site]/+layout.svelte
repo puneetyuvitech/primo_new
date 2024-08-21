@@ -94,14 +94,6 @@
   database_subscribe(async ({ table, action, data, id, match, order }) => {
     // Postgresql
     try {
-      console.log('Accessing database', {
-        table,
-        action,
-        data,
-        id,
-        match,
-        order,
-      })
       const response = await fetch('/api/aws/site/database-subscribe', {
         method: 'POST',
         headers: {
@@ -120,7 +112,6 @@
       console.error('Database error:', error)
     }
     // supabase
-    console.log('Accessing database', { table, action, data, id, match, order })
     let res
     if (action === 'insert') {
       res = await supabase.from(table).insert(data)
@@ -168,8 +159,12 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ bucket, key, file, options }),
+        body: JSON.stringify({ action, bucket, key, file, options }),
       })
+      if (bucket === 'images') {
+        return storage_subscribe
+      }
+      console.log('------ storage_subscribe', storage_subscribe)
     } catch (error) {
       console.log('--  Error :', error)
     }

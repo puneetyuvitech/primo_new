@@ -317,23 +317,23 @@ export const sites = {
     }
     await supabase.from('sites').delete().eq('id', site.id)
     invalidate('app:data')
-    // try {
-    //   const response = await fetch('/api/aws/site/delete-site', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       site,
-    //       delete_repo,
-    //       delete_files,
-    //     }),
-    //   })
+    try {
+      const response = await fetch('/api/aws/site/delete-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          site,
+          delete_repo,
+          delete_files,
+        }),
+      })
 
-    //   const result = await response.json()
-    //   console.log(result)
-    // } catch (error) {
-    //   console.error('Error:', error)
-    // }
+      const result = await response.json()
+      console.log(result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   },
 }

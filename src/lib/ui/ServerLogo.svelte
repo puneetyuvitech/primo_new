@@ -17,6 +17,8 @@
             image_url = reader.result
           }
           reader.readAsDataURL(data)
+        } else {
+          console.log('------- image preview error', error)
         }
       })
     fetch('/api/aws/s3/download-preview', {

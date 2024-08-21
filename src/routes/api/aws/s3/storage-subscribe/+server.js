@@ -6,14 +6,17 @@ export async function POST({ request }) {
   console.log('-- KEY', key)
   try {
     const uploadParams = {
-      Bucket: bucket,
-      Key: key,
-      Body: Buffer.from(file, 'base64'),
+      Bucket: 'alhussein-supabase',
+      Key: `${bucket}/${key}`,
+      Body: file,
     }
     const uploadResult = await s3client.upload(uploadParams).promise()
 
-    const publicUrl = `https://${bucket}.s3.amazonaws.com/${key}`
-    return json({ publicUrl }, { status: 200 })
+    const publicUrl = `https://alhussein-supabase.s3.amazonaws.com/${bucket}/${key}`
+    return json(
+      { message: 'Successfully uploaded', url: publicUrl },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Error uploading file to S3:', error)
     return json({ error: 'Failed to upload file to S3' }, { status: 500 })

@@ -70,6 +70,14 @@ export async function handle({ resolve, event }) {
     const { data: file } = await supabase_admin.storage
       .from('sites')
       .download(`${site.id}/${page.id}/index.html`)
+    // .then(({ data, error }) => {
+    //   if (error) {
+    //     console.log('Error downloading file: ', error.message)
+    //   } else if (data) {
+    //     var reader = new FileReader()
+    //     console.log('--- Result', reader.result)
+    //   }
+    // })
 
     // Postgresql
     // const params = {

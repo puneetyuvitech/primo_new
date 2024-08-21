@@ -59,7 +59,7 @@
         },
         () => {
           invalidate('app:data')
-        }
+        },
       )
       .subscribe()
   }
