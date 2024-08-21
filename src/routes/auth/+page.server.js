@@ -5,18 +5,13 @@ import pool from '$lib/aws/postgres-client'
 /** @type {import('@sveltejs/kit').Load} */
 export async function load({ url, parent }) {
   const { session } = await parent()
-
   const signing_up = url.searchParams.has('signup')
   const joining_server = url.pathname.includes('set-password')
 
   if (!session && !signing_up && !joining_server) {
-    const { data: existing_users } = await supabase_admin
-      .from('users')
-      .select('*')
-
     const query = 'SELECT * FROM users'
-    const result = await pool.query(query) // Replace this result variable to the initiated.
-    console.log('result1 : ', result)
+    const existing_users = await pool.query(query)
+    console.log('result1 : ', existing_users)
 
     const initiated = existing_users?.length > 0
 
@@ -30,32 +25,84 @@ export async function load({ url, parent }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-  sign_in: async ({ request, locals: { supabase } }) => {
+  sign_in: async ({ request }) => {
+    // Parse the form data
     const data = await request.formData()
     const email = data.get('email')
     const password = data.get('password')
+    console.log('email : ', email)
+    console.log('password : ', password)
 
-    const { data: res, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    // Define Keycloak configuration
+    const keycloakServerUrl =
+      'http://localhost:8080/realms/master/protocol/openid-connect/token'
+    const clientId = 'admin-client'
+    const clientSecret = 'aJq58lU50Bmx8KtnHKv22HrznZZk04rG'
 
-    const query = 'SELECT * FROM users WHERE email = $1'
-    const result = await pool.query(query, [email])
-    console.log('result2 : ', result)
-
-    if (error) {
-      console.error(error)
+    // Ensure email and password are not undefined
+    if (!email || !password) {
       return {
         success: false,
-        error: error.message,
+        error: 'Email and password are required.',
       }
     }
 
-    // if invitation exists, send signup to server to create user and add to workspace/editors
-    return {
-      success: true,
-      error: null,
+    const query = 'SELECT * FROM users WHERE email = $1'
+    const result = await pool.query(query, [email])
+    if (result.rowCount === 0) {
+      // No rows found
+      return {
+        success: false,
+        error: 'No matching users found.',
+      }
+    }
+    // Prepare request body using URLSearchParams
+    const body = new URLSearchParams({
+      grant_type: 'password',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: 'openid',
+      username: email.toString(), // Ensure the values are strings
+      password: password.toString(),
+    }).toString()
+
+    // Request a token from Keycloak
+    try {
+      const tokenResponse = await fetch(keycloakServerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body,
+      })
+
+      const tokenData = await tokenResponse.json()
+
+      if (tokenResponse.ok) {
+        // Token retrieval successful
+        console.log('Keycloak Token:', tokenData)
+        return {
+          success: true,
+          error: null,
+          token: tokenData.access_token, // Returning the token or processing further
+        }
+      } else {
+        // Token retrieval failed
+        console.error('Keycloak token retrieval failed:', tokenData)
+        return {
+          success: false,
+          error:
+            tokenData.error_description ||
+            'Failed to retrieve token from Keycloak',
+        }
+      }
+    } catch (error) {
+      // Handle network or other unexpected errors
+      console.error('Unexpected error:', error)
+      return {
+        success: false,
+        error: 'Unexpected error occurred while retrieving token.',
+      }
     }
   },
   sign_up: async ({ request, locals: { supabase } }) => {
