@@ -90,7 +90,7 @@
       }
     }
   })
-
+  // Update the changes in the database
   database_subscribe(async ({ table, action, data, id, match, order }) => {
     // Postgresql
     try {
@@ -144,7 +144,7 @@
     }
     return res.data
   })
-
+  // Update the changes in the storage
   storage_subscribe(async ({ bucket, action, key, file, options }) => {
     if (action === 'upload') {
       await supabase.storage.from(bucket).upload(key, file, options)
