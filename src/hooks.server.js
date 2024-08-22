@@ -5,7 +5,7 @@ import {
 import '$lib/supabase'
 import supabase_admin from '$lib/supabase/admin'
 import { createSupabaseServerClient } from '@supabase/auth-helpers-sveltekit'
-import keycloak from '$lib/aws/auth'
+// import keycloak from '$lib/aws/auth'
 import pool from '$lib/aws/postgres-client'
 // import { KEYCLOAK_URL, KEYCLOAK_REALM } from '$env/static/public'
 import fetch from 'node-fetch' // or use any HTTP client

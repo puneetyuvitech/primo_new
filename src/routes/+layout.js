@@ -4,6 +4,7 @@ import {
 } from '$env/static/public'
 import { createSupabaseLoadClient } from '@supabase/auth-helpers-sveltekit'
 import { redirect } from '@sveltejs/kit'
+import pool from '$lib/aws/postgres-client'
 
 /** @type {import('@sveltejs/kit').Load} */
 export async function load(event) {
