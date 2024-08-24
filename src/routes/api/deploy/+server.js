@@ -1,6 +1,7 @@
 import { json, error as server_error } from '@sveltejs/kit'
 import supabase_admin from '$lib/supabase/admin'
 import axios from 'axios'
+import pool from '$lib/aws/postgres-client'
 
 export async function POST({ request, locals }) {
   const session = await locals.getSession()
@@ -26,6 +27,18 @@ export async function POST({ request, locals }) {
       .eq('user', user_id)
       .single(),
   ])
+  // Postgresql
+  // const [collaborator, server_member] = await Promise.all([
+  //   pool.query(
+  //     'SELECT * FROM collaborators WHERE site = $1 AND user = $2 LIMIT 1',
+  //     [site_id, user_id]
+  //   ),
+  //   pool.query('SELECT * FROM server_members WHERE user = $1 LIMIT 1', [
+  //     user_id,
+  //   ]),
+  // ])
+  // const collaborator = collaboratorResult.rows[0]
+  // const server_member = serverMemberResult.rows[0]
 
   if (collaborator || server_member) {
     const { data: token } = await supabase_admin
@@ -33,6 +46,12 @@ export async function POST({ request, locals }) {
       .select('value')
       .eq('id', `${provider}_token`)
       .single()
+    //postgresql
+    // const tokenResult = await pool.query(
+    //   'SELECT value FROM config WHERE id = $1 LIMIT 1',
+    //   [`${provider}_token`]
+    // )
+    // const token = tokenResult.rows[0]
 
     if (!token) {
       return json({ deployment: null, error: 'No token found' })

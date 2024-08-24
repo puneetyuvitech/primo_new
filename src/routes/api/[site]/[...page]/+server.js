@@ -4,7 +4,9 @@ import { languages } from '@primocms/builder'
 
 export async function GET({ url, params }) {
   const pages = params.page?.split('/') || []
-  const lang = languages.some((lang) => lang.key === pages[0]) ? pages.pop() : 'en'
+  const lang = languages.some((lang) => lang.key === pages[0])
+    ? pages.pop()
+    : 'en'
   const page_url = pages.pop() || 'index'
   const parent_url = pages.pop() || null
 
@@ -30,7 +32,11 @@ export async function GET({ url, params }) {
     { count: subpages_total },
     { data: sections_data },
   ] = await Promise.all([
-    supabase_admin.from('sites').select().filter('url', 'eq', params.site).single(),
+    supabase_admin
+      .from('sites')
+      .select()
+      .filter('url', 'eq', params.site)
+      .single(),
     supabase_admin
       .from('pages')
       .select('*, site!inner(url)')
@@ -43,7 +49,10 @@ export async function GET({ url, params }) {
       .order(options.sort.split(',')[0], {
         ascending: options.sort.split(',')[1] === 'asc',
       })
-      .range(parseInt(options.range.split(',')[0]), parseInt(options.range.split(',')[1])),
+      .range(
+        parseInt(options.range.split(',')[0]),
+        parseInt(options.range.split(',')[1])
+      ),
     supabase_admin
       .from('pages')
       .select('*, parent!inner(url), site!inner(url)', {

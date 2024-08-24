@@ -17,8 +17,26 @@
             image_url = reader.result
           }
           reader.readAsDataURL(data)
+        } else {
+          console.log('------- image preview error', error)
         }
       })
+    fetch('/api/aws/s3/download-preview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key: `images/server-logo.svg` }),
+    })
+      .then((response) => response.json())
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Error downloading file:', error)
+        } else {
+          image_url = data
+        }
+      })
+      .catch((err) => console.error('Fetch error:', err))
   }
 </script>
 

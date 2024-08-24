@@ -1,4 +1,7 @@
-import { PUBLIC_SUPABASE_PUBLIC_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
+import {
+  PUBLIC_SUPABASE_PUBLIC_KEY,
+  PUBLIC_SUPABASE_URL,
+} from '$env/static/public'
 import { createSupabaseLoadClient } from '@supabase/auth-helpers-sveltekit'
 import { redirect } from '@sveltejs/kit'
 
@@ -20,6 +23,22 @@ export async function load(event) {
   if (!session && !event.url.pathname.startsWith('/auth')) {
     throw redirect(303, '/auth')
   } else if (session) {
+    // Postgresql
+    // const response = await event.fetch('api/get-data', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ userId: session.user.id }),
+    // })
+    // if (!response.ok) {
+    //   throw new Error('Network response was not ok')
+    // }
+
+    // const data = await response.json()
+    // const { sitesData: sites, userData: user } = data
+    // return { sites, user }
+
     // const site = event.params['site']
     const { sites, user } = await Promise.all([
       supabase

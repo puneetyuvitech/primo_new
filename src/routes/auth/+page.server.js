@@ -3,13 +3,16 @@ import supabase_admin from '$lib/supabase/admin'
 
 /** @type {import('@sveltejs/kit').Load} */
 export async function load({ url, parent }) {
+  console.log('console1')
   const { session } = await parent()
 
   const signing_up = url.searchParams.has('signup')
   const joining_server = url.pathname.includes('set-password')
 
   if (!session && !signing_up && !joining_server) {
-    const { data: existing_users } = await supabase_admin.from('users').select('*')
+    const { data: existing_users } = await supabase_admin
+      .from('users')
+      .select('*')
     const initiated = existing_users?.length > 0
     if (!initiated) {
       throw redirect(303, '?signup')
@@ -25,8 +28,12 @@ export const actions = {
     const data = await request.formData()
     const email = data.get('email')
     const password = data.get('password')
+    console.log('console2')
 
-    const { data: res, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: res, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
     if (error) {
       console.error(error)
@@ -61,7 +68,8 @@ export const actions = {
     if (count > 0) {
       return {
         success: false,
-        error: 'Server already initialized. Sign in as the server owner to invite users.',
+        error:
+          'Server already initialized. Sign in as the server owner to invite users.',
       }
     }
 
@@ -69,13 +77,14 @@ export const actions = {
     const email = data.get('email')
     const password = data.get('password')
 
-    const { data: res, error: auth_error } = await supabase_admin.auth.admin.createUser({
-      // @ts-ignore
-      email: email,
-      // @ts-ignore
-      password: password,
-      email_confirm: true,
-    })
+    const { data: res, error: auth_error } =
+      await supabase_admin.auth.admin.createUser({
+        // @ts-ignore
+        email: email,
+        // @ts-ignore
+        password: password,
+        email_confirm: true,
+      })
 
     if (auth_error) {
       return {
@@ -84,7 +93,10 @@ export const actions = {
       }
     } else if (res) {
       // @ts-ignore
-      const { error: signin_error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signin_error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
       if (!signin_error) {
         // disable email confirmation and add user
